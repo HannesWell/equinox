@@ -14,6 +14,9 @@
 
 package org.eclipse.osgi.internal.serviceregistry;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
@@ -24,6 +27,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.eclipse.osgi.internal.debug.Debug;
 import org.eclipse.osgi.internal.framework.BundleContextImpl;
 import org.eclipse.osgi.internal.messages.Msg;
 import org.eclipse.osgi.util.NLS;
@@ -46,8 +50,11 @@ public class ServiceUse<S> {
 	 */
 	public static final int DEADLOCK = 1001;
 
+	/** BundleContext associated with this service use */
+	final BundleContextImpl context;
 	/** ServiceDescription of the registered service */
 	final ServiceRegistrationImpl<S> registration;
+	final Debug debug;
 
 	/** bundle's use count for this service */
 	/* @GuardedBy("this") */
@@ -68,6 +75,8 @@ public class ServiceUse<S> {
 	ServiceUse(BundleContextImpl context, ServiceRegistrationImpl<S> registration) {
 		this.useCount = 0;
 		this.registration = registration;
+		this.context = context;
+		this.debug = context.getContainer().getConfiguration().getDebug();
 	}
 
 	/**
@@ -77,7 +86,12 @@ public class ServiceUse<S> {
 	 */
 	/* @GuardedBy("this") */
 	S getService() {
-		assert Thread.holdsLock(this);
+		assert lock.isHeldByCurrentThread();
+		if (debug.DEBUG_SERVICES) {
+			Debug.println('[' + Thread.currentThread().getName() + "] getService[factory=" + registration.getBundle() //$NON-NLS-1$
+					+ "](" + context.getBundleImpl() + "," + registration + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		}
+
 		incrementUse();
 		return registration.getServiceObject();
 	}
@@ -92,9 +106,13 @@ public class ServiceUse<S> {
 	 */
 	/* @GuardedBy("this") */
 	boolean ungetService() {
-		assert Thread.holdsLock(this);
+		assert lock.isHeldByCurrentThread();
 		if (!inUse()) {
 			return false;
+		}
+		if (debug.DEBUG_SERVICES) {
+			Debug.println('[' + Thread.currentThread().getName() + "] ungetService[factory=" + registration.getBundle() //$NON-NLS-1$
+					+ "](" + context.getBundleImpl() + "," + registration + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
 		decrementUse();
 		return true;
@@ -139,6 +157,10 @@ public class ServiceUse<S> {
 		if ((service == null) || (service != getCachedService())) {
 			throw new IllegalArgumentException(Msg.SERVICE_OBJECTS_UNGET_ARGUMENT_EXCEPTION);
 		}
+		if (debug.DEBUG_SERVICES) {
+			Debug.println('[' + Thread.currentThread().getName() + "] releaseServiceObject[factory=" //$NON-NLS-1$
+					+ registration.getBundle() + "](" + context.getBundleImpl() + "," + registration + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		}
 		return ungetService();
 	}
 
@@ -147,7 +169,7 @@ public class ServiceUse<S> {
 	 */
 	/* @GuardedBy("this") */
 	void release() {
-		assert Thread.holdsLock(this);
+		assert lock.isHeldByCurrentThread();
 		resetUse();
 	}
 
@@ -158,7 +180,7 @@ public class ServiceUse<S> {
 	 */
 	/* @GuardedBy("this") */
 	boolean isEmpty() {
-		assert Thread.holdsLock(this);
+		assert lock.isHeldByCurrentThread();
 		return !inUse();
 	}
 
@@ -285,5 +307,36 @@ public class ServiceUse<S> {
 			unlock();
 		}
 
+		/**
+		 * Returns a string identifying this lock, as well as its lock state. The state,
+		 * in brackets, includes either the String {@code "Unlocked"} or the String
+		 * {@code "Locked by"} followed by the {@linkplain Thread#getName name} of the
+		 * owning thread.
+		 *
+		 * @return a string identifying this lock, as well as its lock state
+		 */
+		@SuppressWarnings("nls")
+		@Override
+		public String toString() {
+			Thread o = getOwner();
+
+			if (o != null) {
+				try {
+					ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+					ThreadInfo threadInfo = threadMXBean.getThreadInfo(o.getId(), Integer.MAX_VALUE);
+					StackTraceElement[] trace = threadInfo.getStackTrace();
+					StringBuilder sb = new StringBuilder("\"" + o.getName() + "\"" + (o.isDaemon() ? " daemon" : "")
+							+ " prio=" + o.getPriority() + " Id=" + o.getId() + " " + o.getState());
+
+					for (StackTraceElement traceElement : trace)
+						sb.append("\tat " + traceElement + "\n");
+
+					return super.toString() + "[Locked by thread " + o.getName() + "], Details:\n" + sb.toString();
+				} catch (Exception e) {
+					// do nothing and fall back to just the default, thread might be gone
+				}
+			}
+			return super.toString() + "[Unlocked]";
+		}
 	}
 }
