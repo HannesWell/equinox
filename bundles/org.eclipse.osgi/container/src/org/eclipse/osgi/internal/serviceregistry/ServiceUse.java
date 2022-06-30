@@ -14,8 +14,13 @@
 
 package org.eclipse.osgi.internal.serviceregistry;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import org.eclipse.osgi.internal.framework.BundleContextImpl;
 import org.eclipse.osgi.internal.messages.Msg;
+import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.ServiceException;
 
 /**
@@ -36,6 +41,18 @@ public class ServiceUse<S> {
 	private int useCount;
 
 	/**
+	 * ReentrantLock for this service. Use the @{@link #getLock()} method to obtain
+	 * the lock.
+	 */
+	private final ServiceUseLock lock = new ServiceUseLock();
+
+	/**
+	 * Custom ServiceException type to indicate a deadlock occurred during service
+	 * registration.
+	 */
+	public static final int DEADLOCK = 1001;
+
+	/**
 	 * Constructs a service use encapsulating the service object.
 	 *
 	 * @param   context bundle getting the service
@@ -44,6 +61,62 @@ public class ServiceUse<S> {
 	ServiceUse(BundleContextImpl context, ServiceRegistrationImpl<S> registration) {
 		this.useCount = 0;
 		this.registration = registration;
+	}
+
+	/**
+	 * The ReentrantLock for managing access to this ServiceUse.
+	 * 
+	 * @return A ReentrantLock.
+	 */
+	ReentrantLock getLock() {
+		return lock;
+	}
+
+	private static final ConcurrentMap<Thread, ServiceUseLock> AWAITED_LOCKS = new ConcurrentHashMap<>();
+
+	/**
+	 * Acquires the lock of this ServiceUse.
+	 * 
+	 * If this ServiceUse is locked by another thread then the current thread lies
+	 * dormant until the lock has been acquired.
+	 * 
+	 * @return The {@link AutoCloseable autoclosable} locked state of this
+	 *         ServiceUse
+	 * @throws ServiceException if a deadlock with another ServiceUse is detected
+	 */
+	ServiceUseLock lock() {
+		boolean clearAwaitingLock = false;
+		boolean interrupted = false;
+		do {
+			try {
+				if (lock.tryLock(100_000_000L, TimeUnit.NANOSECONDS)) { // 100ms (but prevent conversion)
+					if (clearAwaitingLock) {
+						AWAITED_LOCKS.remove(Thread.currentThread());
+					}
+					if (interrupted) {
+						Thread.currentThread().interrupt();
+					}
+					return lock;
+				}
+				AWAITED_LOCKS.put(Thread.currentThread(), lock);
+				clearAwaitingLock = true;
+				Thread owner = lock.getOwner();
+				if (owner != null) { // lock could be released in the meantime
+					ServiceUseLock crossingLock = AWAITED_LOCKS.get(owner);
+					if (crossingLock != null && crossingLock.getOwner() == Thread.currentThread()) {
+						throw new ServiceException(NLS.bind(Msg.SERVICE_USE_DEADLOCK, lock));
+					}
+				}
+				// Not (yet) a dead-lock. Lock was regularly hold by another thread. Try again.
+				// Race conditions are not an issue here. A deadlock is a static situation and
+				// if we closely missed the other thread putting its awaited lock it will be
+				// noticed in the next loop-pass.
+			} catch (InterruptedException e) {
+				interrupted = true;
+				// Clear interrupted status and try again to lock, just like a plain
+				// synchronized. Re-interrupted before returning to the caller.
+			}
+		} while (true);
 	}
 
 	/**
@@ -174,5 +247,28 @@ public class ServiceUse<S> {
 	/* @GuardedBy("this") */
 	void resetUse() {
 		useCount = 0;
+	}
+
+	/**
+	 * ReentrantLock subclass with exposed {@link #getOwner()} that implements
+	 * {@link AutoCloseable}.
+	 * 
+	 * This lock is unlocked if the close method is invoked. It therefore can be
+	 * used as resource of a try-with-resources block.
+	 */
+	static class ServiceUseLock extends ReentrantLock implements AutoCloseable {
+		private static final long serialVersionUID = 4281308691512232595L;
+
+		@Override
+		protected Thread getOwner() {
+			return super.getOwner();
+		}
+
+		/** Close and unlock this lock. */
+		@Override
+		public void close() {
+			unlock();
+		}
+
 	}
 }
