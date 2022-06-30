@@ -508,20 +508,19 @@ public class ServiceRegistrationImpl<S> implements ServiceRegistration<S>, Compa
 		}
 
 		if (registry.debug.DEBUG_SERVICES) {
-			Debug.println('[' + Thread.currentThread().getName() + "] getService[" + user.getBundleImpl() + "](" + this //$NON-NLS-1$ //$NON-NLS-2$
+			Debug.println("[" + Thread.currentThread().getName() + "] getService[" + user.getBundleImpl() + "](" + this //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					+ ")"); //$NON-NLS-1$
 		}
 		/* Use a while loop to support retry if a call to a ServiceFactory fails */
 		while (true) {
-			ServiceUse<S> use;
-			boolean added = false;
+			final ServiceUse<S> use;
+			final boolean added;
 			/* Obtain the ServiceUse object for this service by bundle user */
 			synchronized (servicesInUse) {
 				user.checkValid();
 				@SuppressWarnings("unchecked")
 				ServiceUse<S> u = (ServiceUse<S>) servicesInUse.get(this);
-				use = u;
-				if (use == null) {
+				if (u == null) {
 					/* if this is the first use of the service
 					 * optimistically record this service is being used. */
 					use = newServiceUse(user);
@@ -533,6 +532,9 @@ public class ServiceRegistrationImpl<S> implements ServiceRegistration<S>, Compa
 						servicesInUse.put(this, use);
 						contextsUsing.add(user);
 					}
+				} else {
+					use = u;
+					added = false;
 				}
 			}
 
@@ -590,7 +592,7 @@ public class ServiceRegistrationImpl<S> implements ServiceRegistration<S>, Compa
 			return null;
 		}
 		if (registry.debug.DEBUG_SERVICES) {
-			Debug.println('[' + Thread.currentThread().getName() + "] getServiceObjects[" + user.getBundleImpl() + "](" //$NON-NLS-1$ //$NON-NLS-2$
+			Debug.println("[" + Thread.currentThread().getName() + "] getServiceObjects[" + user.getBundleImpl() + "](" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					+ this + ")"); //$NON-NLS-1$
 		}
 
@@ -633,7 +635,7 @@ public class ServiceRegistrationImpl<S> implements ServiceRegistration<S>, Compa
 		}
 
 		if (registry.debug.DEBUG_SERVICES) {
-			Debug.println('[' + Thread.currentThread().getName() + "] ungetService[" + user.getBundleImpl() + "](" //$NON-NLS-1$ //$NON-NLS-2$
+			Debug.println("[" + Thread.currentThread().getName() + "] ungetService[" + user.getBundleImpl() + "](" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					+ this + ")"); //$NON-NLS-1$
 		}
 
@@ -649,7 +651,7 @@ public class ServiceRegistrationImpl<S> implements ServiceRegistration<S>, Compa
 
 		try (ServiceUseLock locked = use.lock()) {
 			if (registry.debug.DEBUG_SERVICES) {
-				Debug.println('[' + Thread.currentThread().getName() + "] ungetServiceLock[" + user.getBundleImpl() //$NON-NLS-1$
+				Debug.println("[" + Thread.currentThread().getName() + "] ungetServiceLock[" + user.getBundleImpl() //$NON-NLS-1$ //$NON-NLS-2$
 						+ "](" + this + "), id:" + System.identityHashCode(locked) + ", holdCount:" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 						+ locked.getHoldCount() 
 						+ ", queued:" + locked.getQueueLength()); //$NON-NLS-1$
