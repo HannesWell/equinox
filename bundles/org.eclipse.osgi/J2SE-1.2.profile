@@ -12,6 +12,58 @@
 #     IBM Corporation - initial API and implementation
 ###############################################################################
 org.osgi.framework.system.packages = \
+ com.sun.CORBA,\
+ com.sun.CORBA.idl,\
+ com.sun.CORBA.iiop,\
+ com.sun.CORBA.util,\
+ com.sun.CosNaming,\
+ com.sun.image.codec.jpeg,\
+ com.sun.java.swing.plaf.motif,\
+ com.sun.java.swing.plaf.motif.icons,\
+ com.sun.java.swing.plaf.motif.resources,\
+ com.sun.java.swing.plaf.windows,\
+ com.sun.java.swing.plaf.windows.icons,\
+ com.sun.java.swing.plaf.windows.resources,\
+ com.sun.rmi.rmid,\
+ java.applet,\
+ java.awt,\
+ java.awt.color,\
+ java.awt.datatransfer,\
+ java.awt.dnd,\
+ java.awt.dnd.peer,\
+ java.awt.event,\
+ java.awt.font,\
+ java.awt.geom,\
+ java.awt.im,\
+ java.awt.image,\
+ java.awt.image.renderable,\
+ java.awt.peer,\
+ java.awt.print,\
+ java.awt.resources,\
+ java.beans,\
+ java.beans.beancontext,\
+ java.io,\
+ java.lang,\
+ java.lang.ref,\
+ java.lang.reflect,\
+ java.math,\
+ java.net,\
+ java.rmi,\
+ java.rmi.activation,\
+ java.rmi.dgc,\
+ java.rmi.registry,\
+ java.rmi.server,\
+ java.security,\
+ java.security.acl,\
+ java.security.cert,\
+ java.security.interfaces,\
+ java.security.spec,\
+ java.sql,\
+ java.text,\
+ java.text.resources,\
+ java.util,\
+ java.util.jar,\
+ java.util.zip,\
  javax.accessibility,\
  javax.swing,\
  javax.swing.border,\
@@ -20,22 +72,91 @@ org.osgi.framework.system.packages = \
  javax.swing.filechooser,\
  javax.swing.plaf,\
  javax.swing.plaf.basic,\
+ javax.swing.plaf.basic.resources,\
  javax.swing.plaf.metal,\
+ javax.swing.plaf.metal.icons,\
+ javax.swing.plaf.metal.resources,\
  javax.swing.plaf.multi,\
  javax.swing.table,\
  javax.swing.text,\
  javax.swing.text.html,\
+ javax.swing.text.html.icons,\
  javax.swing.text.html.parser,\
  javax.swing.text.rtf,\
+ javax.swing.text.rtf.charsets,\
  javax.swing.tree,\
  javax.swing.undo,\
  org.omg.CORBA,\
  org.omg.CORBA.DynAnyPackage,\
  org.omg.CORBA.ORBPackage,\
- org.omg.CORBA.portable,\
  org.omg.CORBA.TypeCodePackage,\
+ org.omg.CORBA.portable,\
  org.omg.CosNaming,\
- org.omg.CosNaming.NamingContextPackage
+ org.omg.CosNaming.NamingContextPackage,\
+ sun.applet,\
+ sun.applet.resources,\
+ sun.audio,\
+ sun.awt,\
+ sun.awt.color,\
+ sun.awt.font,\
+ sun.awt.geom,\
+ sun.awt.im,\
+ sun.awt.im.resources,\
+ sun.awt.image,\
+ sun.awt.image.codec,\
+ sun.awt.motif,\
+ sun.awt.motif.resources,\
+ sun.awt.robot,\
+ sun.awt.robot.probe,\
+ sun.beans.editors,\
+ sun.beans.infos,\
+ sun.dc.path,\
+ sun.dc.pr,\
+ sun.io,\
+ sun.java2d,\
+ sun.java2d.loops,\
+ sun.java2d.pipe,\
+ sun.jdbc.odbc,\
+ sun.misc,\
+ sun.net,\
+ sun.net.ftp,\
+ sun.net.nntp,\
+ sun.net.smtp,\
+ sun.net.www,\
+ sun.net.www.content.audio,\
+ sun.net.www.content.image,\
+ sun.net.www.content.text,\
+ sun.net.www.http,\
+ sun.net.www.protocol.doc,\
+ sun.net.www.protocol.file,\
+ sun.net.www.protocol.ftp,\
+ sun.net.www.protocol.gopher,\
+ sun.net.www.protocol.http,\
+ sun.net.www.protocol.jar,\
+ sun.net.www.protocol.mailto,\
+ sun.net.www.protocol.netdoc,\
+ sun.net.www.protocol.systemresource,\
+ sun.net.www.protocol.verbatim,\
+ sun.rmi.log,\
+ sun.rmi.registry,\
+ sun.rmi.registry.resources,\
+ sun.rmi.rmid.resources,\
+ sun.rmi.server,\
+ sun.rmi.transport,\
+ sun.rmi.transport.proxy,\
+ sun.rmi.transport.tcp,\
+ sun.security.acl,\
+ sun.security.action,\
+ sun.security.pkcs,\
+ sun.security.provider,\
+ sun.security.tools,\
+ sun.security.util,\
+ sun.security.x509,\
+ sun.tools.jar,\
+ sun.tools.jar.resources,\
+ sun.tools.util,\
+ sunw.io,\
+ sunw.util
 org.osgi.framework.bootdelegation = \
  sun.*,\
  com.sun.*
