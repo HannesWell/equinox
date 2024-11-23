@@ -15,7 +15,7 @@ jobs:
     permissions:
       pull-requests: write
       contents: write
-    uses: eclipse-platform/eclipse.platform.releng.aggregator/.github/workflows/updateRelease.yml@master
+    uses: HannesWell/eclipse.platform.releng.aggregator/.github/workflows/updateRelease.yml@master
     with:
       nextReleaseVersion: ${{ inputs.nextReleaseVersion || github.event.milestone.title }}
       botName: Eclipse Equinox Bot
