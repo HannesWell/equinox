@@ -18,7 +18,3 @@ jobs:
     uses: HannesWell/eclipse.platform.releng.aggregator/.github/workflows/updateRelease.yml@master
     with:
       nextReleaseVersion: ${{ inputs.nextReleaseVersion || github.event.milestone.title }}
-      botName: Eclipse Equinox Bot
-      botMail: equinox-bot@eclipse.org
-    secrets:
-      githubBotPAT: ${{ secrets.EQUINOX_BOT_PAT }}
