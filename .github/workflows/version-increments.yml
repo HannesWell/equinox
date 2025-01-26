@@ -11,4 +11,4 @@ jobs:
     with:
       botGithubId: eclipse-equinox-bot
     secrets:
-      githubBotPAT: ${{ secrets.EQUINOX_BOT_PAT }}
+      githubBotPAT: ${{ secrets.GITHUB_TOKEN }}
