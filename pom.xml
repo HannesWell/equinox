@@ -24,7 +24,8 @@
   <packaging>pom</packaging>
 
   <properties>
-    <tycho.scmUrl>scm:git:https://github.com/eclipse-equinox/equinox.git</tycho.scmUrl>
+    <scm.url>https://github.com/eclipse-equinox/equinox</scm.url>
+    <tycho.scmUrl>scm:git:${scm.url}.git</tycho.scmUrl>
     <!-- location of equinox.binaries project -->
     <!-- required by: org.eclipse.equinox.feature:org.eclipse.equinox.executable -->
     <!-- required by: org.eclipse.equinox.framework:launcher-binary-parent -->
@@ -229,6 +230,45 @@
 		    <module>bundles/org.eclipse.osgi.tests</module>
         </modules>
     </profile>
+    <profile>
+      <id>fetch-natives</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>fetch-absent-launcher-natives</id>
+                <phase>generate-resources</phase>
+                <goals>
+                   <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <!-- See https://stackoverflow.com/a/53227117 and http://ant-contrib.sourceforge.net/tasks/tasks/index.html -->
+                    <taskdef resource="net/sf/antcontrib/antlib.xml"/>
+                    <if>
+                      <not><resourceexists><file file="${equinox.binaries.loc}"/></resourceexists></not>
+                      <then>
+                        <exec executable="git">
+                          <arg line="clone --depth 1"/>
+                          <arg value="${scm.url}.binaries.git"/>
+                          <arg path="${equinox.binaries.loc}"/>
+                        </exec>
+                      </then>
+                      <else>
+                        <echo message="Skipping as Equinox-binaries git-repository already exists at: ${equinox.binaries.loc}"/>
+                      </else>
+                    </if>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <build>
@@ -274,6 +314,28 @@
               <optionalDependencies>${target-platform.optionalDependencies}</optionalDependencies>
             </dependency-resolution>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.ant</groupId>
+              <artifactId>ant</artifactId>
+              <version>1.10.14</version>
+            </dependency>
+            <dependency>
+              <groupId>ant-contrib</groupId>
+              <artifactId>ant-contrib</artifactId>
+              <version>1.0b3</version>
+              <exclusions>
+                <exclusion>
+                  <groupId>ant</groupId>
+                  <artifactId>ant</artifactId>
+                </exclusion>
+              </exclusions>
+            </dependency>
+          </dependencies>
         </plugin>
       </plugins>
     </pluginManagement>
